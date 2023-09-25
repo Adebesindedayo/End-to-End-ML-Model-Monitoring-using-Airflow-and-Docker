@@ -1,0 +1,13 @@
+jupyterlab
+deepchecks
+pandas
+numpy
+matplotlib
+flask
+scikit-learn
+scipy
+xgboost
+statistics
+sqlalchemy
+sqlalchemy_utils
+psycopg2-binary

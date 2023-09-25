@@ -1,0 +1,16 @@
+Error: Airflow: ValueError: Unable to configure handler 'processor' - wasb logger
+
+Solution:
+1. Stop current container
+	docker-compose down --volumes --remove-orphans
+
+2. Delete folders dags, logs, plugins
+
+3. Destroy the images and volumes already created (in Docker Desktop)
+
+4. Create folders again from command line
+	mkdir logs dags plugins
+
+5. run airflow docker again
+	docker-compose up airflow-init
+	docker-compose up

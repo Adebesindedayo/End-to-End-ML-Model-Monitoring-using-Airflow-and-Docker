@@ -1,0 +1,2127 @@
+<!--
+    ~ ----------------------------------------------------------------------------
+    ~ Copyright (C) 2021-2022 Deepchecks (https://www.deepchecks.com)
+    ~
+    ~ This file is part of Deepchecks.
+    ~ Deepchecks is distributed under the terms of the GNU Affero General
+    ~ Public License (version 3 or later).
+    ~ You should have received a copy of the GNU Affero General Public License
+    ~ along with Deepchecks.  If not, see <http://www.gnu.org/licenses/>.
+    ~ ----------------------------------------------------------------------------
+    ~
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>data quality</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #212529;
+            text-align: left;
+            max-width: 1200px;
+            margin: auto;
+            background-color: white;
+        }
+
+        div.nbinput.container div.prompt *,
+        div.nboutput.container div.prompt *,
+        div.nbinput.container div.input_area pre,
+        div.nboutput.container div.output_area pre,
+        div.nbinput.container div.input_area .highlight,
+        div.nboutput.container div.output_area .highlight {
+            border: none;
+            padding: 0;
+            margin: 0;
+            box-shadow: none;
+        }
+
+        div.nbinput.container > div[class*=highlight],
+        div.nboutput.container > div[class*=highlight] {
+            margin: 0;
+        }
+
+        div.nbinput.container div.prompt *,
+        div.nboutput.container div.prompt * {
+            background: none;
+        }
+
+        div.nboutput.container div.output_area .highlight,
+        div.nboutput.container div.output_area pre {
+            background: unset;
+        }
+
+        div.nboutput.container div.output_area div.highlight {
+            color: unset;  /* override Pygments text color */
+        }
+
+        /* avoid gaps between output lines */
+        div.nboutput.container div[class*=highlight] pre {
+            line-height: normal;
+        }
+
+        /* input/output containers */
+        div.nbinput.container,
+        div.nboutput.container {
+            display: -webkit-flex;
+            display: flex;
+            align-items: flex-start;
+            margin: 0;
+            width: 100%;
+        }
+        @media (max-width: 540px) {
+            div.nbinput.container,
+            div.nboutput.container {
+                flex-direction: column;
+            }
+        }
+
+        /* input container */
+        div.nbinput.container {
+            padding-top: 5px;
+        }
+
+        /* last container */
+        div.nblast.container {
+            padding-bottom: 5px;
+        }
+
+        /* input prompt */
+        div.nbinput.container div.prompt pre {
+            color: #307FC1;
+        }
+
+        /* output prompt */
+        div.nboutput.container div.prompt pre {
+            color: #BF5B3D;
+        }
+
+        /* all prompts */
+        div.nbinput.container div.prompt,
+        div.nboutput.container div.prompt {
+            width: 4.5ex;
+            padding-top: 5px;
+            position: relative;
+            user-select: none;
+        }
+
+        div.nbinput.container div.prompt > div,
+        div.nboutput.container div.prompt > div {
+            position: absolute;
+            right: 0;
+            margin-right: 0.3ex;
+        }
+
+        @media (max-width: 540px) {
+            div.nbinput.container div.prompt,
+            div.nboutput.container div.prompt {
+                width: unset;
+                text-align: left;
+                padding: 0.4em;
+            }
+            div.nboutput.container div.prompt.empty {
+                padding: 0;
+            }
+
+            div.nbinput.container div.prompt > div,
+            div.nboutput.container div.prompt > div {
+                position: unset;
+            }
+        }
+
+        /* disable scrollbars on prompts */
+        div.nbinput.container div.prompt pre,
+        div.nboutput.container div.prompt pre {
+            overflow: hidden;
+        }
+
+        /* input/output area */
+        div.nbinput.container div.input_area,
+        div.nboutput.container div.output_area {
+            -webkit-flex: 1;
+            flex: 1;
+            overflow: auto;
+        }
+        @media (max-width: 540px) {
+            div.nbinput.container div.input_area,
+            div.nboutput.container div.output_area {
+                width: 100%;
+            }
+        }
+
+        /* input area */
+        div.nbinput.container div.input_area {
+            border: 1px solid #e0e0e0;
+            border-radius: 2px;
+            /*background: #f5f5f5;*/
+        }
+
+        /* override MathJax center alignment in output cells */
+        div.nboutput.container div[class*=MathJax] {
+            text-align: left !important;
+        }
+
+        /* override sphinx.ext.imgmath center alignment in output cells */
+        div.nboutput.container div.math p {
+            text-align: left;
+        }
+
+        /* standard error */
+        div.nboutput.container div.output_area.stderr {
+            background: #fdd;
+        }
+
+        /* ANSI colors */
+        .ansi-black-fg { color: #3E424D; }
+        .ansi-black-bg { background-color: #3E424D; }
+        .ansi-black-intense-fg { color: #282C36; }
+        .ansi-black-intense-bg { background-color: #282C36; }
+        .ansi-red-fg { color: #E75C58; }
+        .ansi-red-bg { background-color: #E75C58; }
+        .ansi-red-intense-fg { color: #B22B31; }
+        .ansi-red-intense-bg { background-color: #B22B31; }
+        .ansi-green-fg { color: #00A250; }
+        .ansi-green-bg { background-color: #00A250; }
+        .ansi-green-intense-fg { color: #007427; }
+        .ansi-green-intense-bg { background-color: #007427; }
+        .ansi-yellow-fg { color: #DDB62B; }
+        .ansi-yellow-bg { background-color: #DDB62B; }
+        .ansi-yellow-intense-fg { color: #B27D12; }
+        .ansi-yellow-intense-bg { background-color: #B27D12; }
+        .ansi-blue-fg { color: #208FFB; }
+        .ansi-blue-bg { background-color: #208FFB; }
+        .ansi-blue-intense-fg { color: #0065CA; }
+        .ansi-blue-intense-bg { background-color: #0065CA; }
+        .ansi-magenta-fg { color: #D160C4; }
+        .ansi-magenta-bg { background-color: #D160C4; }
+        .ansi-magenta-intense-fg { color: #A03196; }
+        .ansi-magenta-intense-bg { background-color: #A03196; }
+        .ansi-cyan-fg { color: #60C6C8; }
+        .ansi-cyan-bg { background-color: #60C6C8; }
+        .ansi-cyan-intense-fg { color: #258F8F; }
+        .ansi-cyan-intense-bg { background-color: #258F8F; }
+        .ansi-white-fg { color: #C5C1B4; }
+        .ansi-white-bg { background-color: #C5C1B4; }
+        .ansi-white-intense-fg { color: #A1A6B2; }
+        .ansi-white-intense-bg { background-color: #A1A6B2; }
+
+        .ansi-default-inverse-fg { color: #FFFFFF; }
+        .ansi-default-inverse-bg { background-color: #000000; }
+
+        .ansi-bold { font-weight: bold; }
+        .ansi-underline { text-decoration: underline; }
+
+
+        div.nbinput.container div.input_area div[class*=highlight] > pre,
+        div.nboutput.container div.output_area div[class*=highlight] > pre,
+        div.nboutput.container div.output_area div[class*=highlight].math,
+        div.nboutput.container div.output_area.rendered_html,
+        div.nboutput.container div.output_area > div.output_javascript,
+        div.nboutput.container div.output_area:not(.rendered_html) > img{
+            padding: 5px;
+            margin: 0;
+        }
+
+        /* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+        div.nbinput.container div.input_area > div[class^='highlight'],
+        div.nboutput.container div.output_area > div[class^='highlight']{
+            overflow-y: hidden;
+        }
+
+        /* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+        .prompt .copybtn {
+            display: none;
+        }
+
+        /* Some additional styling taken form the Jupyter notebook CSS */
+        div.rendered_html table {
+        border: none;
+        border-collapse: collapse;
+        border-spacing: 0;
+        color: black;
+        font-size: 12px;
+        table-layout: fixed;
+        }
+        div.rendered_html thead {
+        border-bottom: 1px solid black;
+        vertical-align: bottom;
+        }
+        div.rendered_html tr,
+        div.rendered_html th,
+        div.rendered_html td {
+        text-align: right;
+        vertical-align: middle;
+        padding: 0.5em 0.5em;
+        line-height: normal;
+        white-space: normal;
+        max-width: none;
+        border: none;
+        }
+        div.rendered_html th {
+        font-weight: bold;
+        }
+        div.rendered_html tbody tr:nth-child(odd) {
+        background: #f5f5f5;
+        }
+        div.rendered_html tbody tr:hover {
+        background: rgba(66, 165, 245, 0.2);
+        }
+    </style>
+    <script>
+        (!window.navigator.onLine ? alert('needs internet connection') : '');
+    </script>
+</head>
+<body>
+    
+
+<!-- Load require.js. Delete this if your page already loads require.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js" crossorigin="anonymous"></script>
+
+<script type="application/vnd.jupyter.widget-state+json">
+{
+  "version_major": 2,
+  "version_minor": 0,
+  "state": {
+    "046b5fe8812741a48d6c90663f142615": {
+      "model_name": "AccordionModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "children": [
+          "IPY_MODEL_6734cb1db8e04e56b1b66e1d00b3706e"
+        ],
+        "layout": "IPY_MODEL_c757ba0a97574b509ae2eee245c83efd",
+        "selected_index": 0,
+        "titles": [
+          ""
+        ]
+      }
+    },
+    "6734cb1db8e04e56b1b66e1d00b3706e": {
+      "model_name": "VBoxModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "children": [
+          "IPY_MODEL_a8b5ac964bf54d50b2e13e0cc234254d",
+          "IPY_MODEL_edd75d227e9540db8dfe22fca545b9d5",
+          "IPY_MODEL_3cbc151d0ae54c4bb67104952541fddb",
+          "IPY_MODEL_1129dae1186447c59eef8b7f0df9120a",
+          "IPY_MODEL_e0d8ebbc6744493f8165dafdc9106c6b"
+        ],
+        "layout": "IPY_MODEL_b4ad14deee844b77877d6c5e8848e86b"
+      }
+    },
+    "a8b5ac964bf54d50b2e13e0cc234254d": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_7240f5fc21f448a8b830b2db314abdfd",
+        "style": "IPY_MODEL_12fe0bee16034b40921ca33815877501",
+        "value": "\n            <h1 id=\"summary_GJ3R6KTJG3H7B3WH9P753O3DM\">data quality</h1>\n            <p>\n                The suite is composed of various checks such as: Outlier Sample Detection, Data Duplicates, Conflicting Labels, etc...<br>\n                Each check may contain conditions (which will result in pass / fail / warning / error\n                , represented by \n<span style=\"color: green;display:inline-block\">\u2713</span> /\n<span style=\"color: red;display:inline-block\">\u2716</span> /\n<span style=\"color: orange;font-weight:bold;display:inline-block\">!</span> /\n<span style=\"color: firebrick;font-weight:bold;display:inline-block\">\u2048</span>\n) as well as other outputs such as plots or tables.<br>\n                Suites, checks and conditions can all be modified. Read more about\n                <a href=https://docs.deepchecks.com/en/stable/examples/guides/create_a_custom_suite.html?utm_source=display_output&utm_medium=referral&utm_campaign=suite_link target=\"_blank\">custom suites</a>.\n            </p>\n\n"
+      }
+    },
+    "7240f5fc21f448a8b830b2db314abdfd": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "12fe0bee16034b40921ca33815877501": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "edd75d227e9540db8dfe22fca545b9d5": {
+      "model_name": "VBoxModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "children": [
+          "IPY_MODEL_0a71f6345c094601ac9ce539886eb871",
+          "IPY_MODEL_8a8120ceff764512ab3a1faf9258e346"
+        ],
+        "layout": "IPY_MODEL_21a6a37f05964c52b0be661c3bffedb7"
+      }
+    },
+    "0a71f6345c094601ac9ce539886eb871": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_70bc1682440845c2afde1b08ca7586d1",
+        "style": "IPY_MODEL_fb4cf9591776481e9d94033100de465f"
+      }
+    },
+    "70bc1682440845c2afde1b08ca7586d1": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "fb4cf9591776481e9d94033100de465f": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "8a8120ceff764512ab3a1faf9258e346": {
+      "model_name": "AccordionModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [
+          "rendered_html",
+          "jp-RenderedHTMLCommon",
+          "jp-RenderedHTML",
+          "jp-OutputArea-output"
+        ],
+        "children": [
+          "IPY_MODEL_a2dbece1315f41a694a445675db943c1"
+        ],
+        "layout": "IPY_MODEL_65b2ec9369054d81999c822cbc7002ea",
+        "titles": [
+          ""
+        ]
+      }
+    },
+    "a2dbece1315f41a694a445675db943c1": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_78fbe0beb9e742afbcf2b0eb0706b763",
+        "style": "IPY_MODEL_b913690ce5cd4bfb99735897ff0dde77",
+        "value": "<p>No outputs to show.</p>"
+      }
+    },
+    "78fbe0beb9e742afbcf2b0eb0706b763": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "b913690ce5cd4bfb99735897ff0dde77": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "65b2ec9369054d81999c822cbc7002ea": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "21a6a37f05964c52b0be661c3bffedb7": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "3cbc151d0ae54c4bb67104952541fddb": {
+      "model_name": "VBoxModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "children": [
+          "IPY_MODEL_7a76813fafb44f46a07ee2516f77bdfa",
+          "IPY_MODEL_5d1aeb291c144514bb92b838852b0222"
+        ],
+        "layout": "IPY_MODEL_eb3b22c4aed644198d0046f578d23e80"
+      }
+    },
+    "7a76813fafb44f46a07ee2516f77bdfa": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_f283244086f347a68b5425839145fb8b",
+        "style": "IPY_MODEL_9880b4e2e2784e1086ad237b2afdc39b",
+        "value": "<span id=\"summary_GJ3R6KTJG3H7B3WH9P753O3DM-section-S61IQ\"></span>"
+      }
+    },
+    "f283244086f347a68b5425839145fb8b": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "9880b4e2e2784e1086ad237b2afdc39b": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "5d1aeb291c144514bb92b838852b0222": {
+      "model_name": "AccordionModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [
+          "rendered_html",
+          "jp-RenderedHTMLCommon",
+          "jp-RenderedHTML",
+          "jp-OutputArea-output"
+        ],
+        "children": [
+          "IPY_MODEL_f0acf20f623349d6b0176047cb7b33a5"
+        ],
+        "layout": "IPY_MODEL_bc8ded3d5ae147b18b34c283ab7a8310",
+        "titles": [
+          ""
+        ]
+      }
+    },
+    "f0acf20f623349d6b0176047cb7b33a5": {
+      "model_name": "VBoxModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "children": [
+          "IPY_MODEL_c73ddabf78344bfaa87142f6586a9c74",
+          "IPY_MODEL_1898207a8d394691a99ff12081841d1b",
+          "IPY_MODEL_5a390af5942a49ffa577bd392c985d87",
+          "IPY_MODEL_61c850f925164925803aca7601b5eb55",
+          "IPY_MODEL_458dc77158764cbcab46660b6bf2b957"
+        ],
+        "layout": "IPY_MODEL_ee3c20cd9eec470ca13772362716db11"
+      }
+    },
+    "c73ddabf78344bfaa87142f6586a9c74": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_f96cf8f2935a417fa7d7f1f69cd57351",
+        "style": "IPY_MODEL_5894f2ddd8504f2fa7ab2a96bed98ecf",
+        "value": "<style type=\"text/css\">\n#T_d524f_ table {\n  text-align: left;\n  white-space: pre-wrap;\n}\n#T_d524f_ thead {\n  text-align: left;\n  white-space: pre-wrap;\n}\n#T_d524f_ tbody {\n  text-align: left;\n  white-space: pre-wrap;\n}\n#T_d524f_ th {\n  text-align: left;\n  white-space: pre-wrap;\n}\n#T_d524f_ td {\n  text-align: left;\n  white-space: pre-wrap;\n}\n</style>\n<table id=\"T_d524f_\">\n  <thead>\n    <tr>\n      <th class=\"col_heading level0 col0\" >Status</th>\n      <th class=\"col_heading level0 col1\" >Check</th>\n      <th class=\"col_heading level0 col2\" >Condition</th>\n      <th class=\"col_heading level0 col3\" >More Info</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td id=\"T_d524f_row0_col0\" class=\"data row0 col0\" ><div style=\"color: green;text-align: center\">\u2713</div></td>\n      <td id=\"T_d524f_row0_col1\" class=\"data row0 col1\" ><a href=\"#FeatureLabelCorrelation_GJ3R6KTJG3H7B3WH9P753O3DM-section-S61IQ\">Feature Label Correlation</a></td>\n      <td id=\"T_d524f_row0_col2\" class=\"data row0 col2\" >Features' Predictive Power Score is less than 0.9</td>\n      <td id=\"T_d524f_row0_col3\" class=\"data row0 col3\" >Passed for 19 relevant columns</td>\n    </tr>\n    <tr>\n      <td id=\"T_d524f_row1_col0\" class=\"data row1 col0\" ><div style=\"color: green;text-align: center\">\u2713</div></td>\n      <td id=\"T_d524f_row1_col1\" class=\"data row1 col1\" ><a href=\"#OutlierSampleDetection_GJ3R6KTJG3H7B3WH9P753O3DM-section-S61IQ\">Outlier Sample Detection</a></td>\n      <td id=\"T_d524f_row1_col2\" class=\"data row1 col2\" >Ratio of samples exceeding the outlier score threshold 0.7 is less or equal to 10%</td>\n      <td id=\"T_d524f_row1_col3\" class=\"data row1 col3\" >0% of dataset samples above outlier threshold</td>\n    </tr>\n    <tr>\n      <td id=\"T_d524f_row2_col0\" class=\"data row2 col0\" ><div style=\"color: green;text-align: center\">\u2713</div></td>\n      <td id=\"T_d524f_row2_col1\" class=\"data row2 col1\" >Data Duplicates</td>\n      <td id=\"T_d524f_row2_col2\" class=\"data row2 col2\" >Duplicate data ratio is less or equal to 30%</td>\n      <td id=\"T_d524f_row2_col3\" class=\"data row2 col3\" >Found 0% duplicate data</td>\n    </tr>\n    <tr>\n      <td id=\"T_d524f_row3_col0\" class=\"data row3 col0\" ><div style=\"color: green;text-align: center\">\u2713</div></td>\n      <td id=\"T_d524f_row3_col1\" class=\"data row3 col1\" >Conflicting Labels</td>\n      <td id=\"T_d524f_row3_col2\" class=\"data row3 col2\" >Ambiguous sample ratio is less or equal to 0%</td>\n      <td id=\"T_d524f_row3_col3\" class=\"data row3 col3\" >Ratio of samples with conflicting labels: 0%</td>\n    </tr>\n  </tbody>\n</table>\n"
+      }
+    },
+    "f96cf8f2935a417fa7d7f1f69cd57351": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "5894f2ddd8504f2fa7ab2a96bed98ecf": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "1898207a8d394691a99ff12081841d1b": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_6adf6aadd17946349dfb0700a5ba2f26",
+        "style": "IPY_MODEL_36d749300e17419888c63c7044301b35",
+        "value": "<hr style=\"background-color: #eee;border: 0 none;color: #eee;height: 4px;\">"
+      }
+    },
+    "6adf6aadd17946349dfb0700a5ba2f26": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "36d749300e17419888c63c7044301b35": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "5a390af5942a49ffa577bd392c985d87": {
+      "model_name": "VBoxModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [
+          "rendered_html",
+          "jp-RenderedHTMLCommon",
+          "jp-RenderedHTML",
+          "jp-OutputArea-output"
+        ],
+        "children": [
+          "IPY_MODEL_785a5a824f7a4157a786091715d876b3",
+          "IPY_MODEL_d85fd185abd0447fac37ee9659b4e02e",
+          "IPY_MODEL_0bc22ba7eab54d2aac3a97d1765298bb",
+          "IPY_MODEL_ff574d9860854ba89704ae888dc78866"
+        ],
+        "layout": "IPY_MODEL_348964530e6c4b97b1d744e1adfd4fcf"
+      }
+    },
+    "785a5a824f7a4157a786091715d876b3": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_03f86a292aa94c8dbc3934a9a9a7ac09",
+        "style": "IPY_MODEL_b8d97156955249d6acd738d9699a3b51",
+        "value": "<h4 id=\"FeatureLabelCorrelation_GJ3R6KTJG3H7B3WH9P753O3DM-section-S61IQ\"><b>Feature Label Correlation</b></h4>"
+      }
+    },
+    "03f86a292aa94c8dbc3934a9a9a7ac09": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "b8d97156955249d6acd738d9699a3b51": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "d85fd185abd0447fac37ee9659b4e02e": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_98194d1ed7774bfa87ae744eac56c269",
+        "style": "IPY_MODEL_f5a1ba54d54a4cb18e781a4429c31da4",
+        "value": "<p>Return the PPS (Predictive Power Score) of all features in relation to the label.</p>"
+      }
+    },
+    "98194d1ed7774bfa87ae744eac56c269": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "f5a1ba54d54a4cb18e781a4429c31da4": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "0bc22ba7eab54d2aac3a97d1765298bb": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_cbddf3963ec444c98e6b5687a3386311",
+        "style": "IPY_MODEL_13b67ff7c7f14654b214c7d14093fe0b",
+        "value": "<h5><b>Conditions Summary</b></h5><style type=\"text/css\">\n#T_8f01d_ table {\n  text-align: left;\n  white-space: pre-wrap;\n}\n#T_8f01d_ thead {\n  text-align: left;\n  white-space: pre-wrap;\n}\n#T_8f01d_ tbody {\n  text-align: left;\n  white-space: pre-wrap;\n}\n#T_8f01d_ th {\n  text-align: left;\n  white-space: pre-wrap;\n}\n#T_8f01d_ td {\n  text-align: left;\n  white-space: pre-wrap;\n}\n</style>\n<table id=\"T_8f01d_\">\n  <thead>\n    <tr>\n      <th class=\"col_heading level0 col0\" >Status</th>\n      <th class=\"col_heading level0 col1\" >Condition</th>\n      <th class=\"col_heading level0 col2\" >More Info</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td id=\"T_8f01d_row0_col0\" class=\"data row0 col0\" ><div style=\"color: green;text-align: center\">\u2713</div></td>\n      <td id=\"T_8f01d_row0_col1\" class=\"data row0 col1\" >Features' Predictive Power Score is less than 0.9</td>\n      <td id=\"T_8f01d_row0_col2\" class=\"data row0 col2\" >Passed for 19 relevant columns</td>\n    </tr>\n  </tbody>\n</table>\n"
+      }
+    },
+    "cbddf3963ec444c98e6b5687a3386311": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "13b67ff7c7f14654b214c7d14093fe0b": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "ff574d9860854ba89704ae888dc78866": {
+      "model_name": "VBoxModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "children": [
+          "IPY_MODEL_6683dbb6e36441d68a1baf4269698480",
+          "IPY_MODEL_66affbfd404149649970d1b77aea5a8b",
+          "IPY_MODEL_970bf5d935d243a5b006adbcc84de402",
+          "IPY_MODEL_79150c076bbd4ad0bc033f4f052d9f10"
+        ],
+        "layout": "IPY_MODEL_815594a813c34381acadf499542ef2f1"
+      }
+    },
+    "6683dbb6e36441d68a1baf4269698480": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_ff99f8e4bf2544b6ac9e803945ba9b5a",
+        "style": "IPY_MODEL_1e92e9d6d64b4d1aa727a4d7ea9e35cb",
+        "value": "<h5><b>Additional Outputs</b></h5>"
+      }
+    },
+    "ff99f8e4bf2544b6ac9e803945ba9b5a": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "1e92e9d6d64b4d1aa727a4d7ea9e35cb": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "66affbfd404149649970d1b77aea5a8b": {
+      "model_name": "FigureModel",
+      "model_module": "jupyterlab-plotly",
+      "model_module_version": "^5.5.0",
+      "state": {
+        "_config": {
+          "plotlyServerURL": "https://plot.ly"
+        },
+        "_data": [
+          {
+            "marker": {
+              "color": "#00008b"
+            },
+            "name": "Train",
+            "text": [
+              "<b>0.56</b>",
+              "<b>0.03</b>",
+              "<b>0.0</b>",
+              "<b>0.0</b>",
+              "<b>0.0</b>"
+            ],
+            "textposition": "outside",
+            "x": [
+              "credit_score",
+              "current_credit_balance",
+              "current_loan_amount",
+              "purpose",
+              "term"
+            ],
+            "y": {
+              "dtype": "float64",
+              "shape": [
+                5
+              ]
+            },
+            "type": "bar",
+            "uid": "02a0d8ae-31e6-4b9c-a463-360e0ba1474a"
+          }
+        ],
+        "_dom_classes": [],
+        "_js2py_layoutDelta": {},
+        "_js2py_pointsCallback": {},
+        "_js2py_relayout": {},
+        "_js2py_restyle": {},
+        "_js2py_traceDeltas": {},
+        "_js2py_update": {},
+        "_layout": {
+          "barmode": "group",
+          "height": 500,
+          "legend": {
+            "x": 1.0,
+            "y": 1.0
+          },
+          "template": {
+            "data": {
+              "barpolar": [
+                {
+                  "marker": {
+                    "line": {
+                      "color": "#E5ECF6",
+                      "width": 0.5
+                    },
+                    "pattern": {
+                      "fillmode": "overlay",
+                      "size": 10,
+                      "solidity": 0.2
+                    }
+                  },
+                  "type": "barpolar"
+                }
+              ],
+              "bar": [
+                {
+                  "error_x": {
+                    "color": "#2a3f5f"
+                  },
+                  "error_y": {
+                    "color": "#2a3f5f"
+                  },
+                  "marker": {
+                    "line": {
+                      "color": "#E5ECF6",
+                      "width": 0.5
+                    },
+                    "pattern": {
+                      "fillmode": "overlay",
+                      "size": 10,
+                      "solidity": 0.2
+                    }
+                  },
+                  "type": "bar"
+                }
+              ],
+              "carpet": [
+                {
+                  "aaxis": {
+                    "endlinecolor": "#2a3f5f",
+                    "gridcolor": "white",
+                    "linecolor": "white",
+                    "minorgridcolor": "white",
+                    "startlinecolor": "#2a3f5f"
+                  },
+                  "baxis": {
+                    "endlinecolor": "#2a3f5f",
+                    "gridcolor": "white",
+                    "linecolor": "white",
+                    "minorgridcolor": "white",
+                    "startlinecolor": "#2a3f5f"
+                  },
+                  "type": "carpet"
+                }
+              ],
+              "choropleth": [
+                {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  },
+                  "type": "choropleth"
+                }
+              ],
+              "contourcarpet": [
+                {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  },
+                  "type": "contourcarpet"
+                }
+              ],
+              "contour": [
+                {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  },
+                  "colorscale": [
+                    [
+                      0.0,
+                      "#0d0887"
+                    ],
+                    [
+                      0.1111111111111111,
+                      "#46039f"
+                    ],
+                    [
+                      0.2222222222222222,
+                      "#7201a8"
+                    ],
+                    [
+                      0.3333333333333333,
+                      "#9c179e"
+                    ],
+                    [
+                      0.4444444444444444,
+                      "#bd3786"
+                    ],
+                    [
+                      0.5555555555555556,
+                      "#d8576b"
+                    ],
+                    [
+                      0.6666666666666666,
+                      "#ed7953"
+                    ],
+                    [
+                      0.7777777777777778,
+                      "#fb9f3a"
+                    ],
+                    [
+                      0.8888888888888888,
+                      "#fdca26"
+                    ],
+                    [
+                      1.0,
+                      "#f0f921"
+                    ]
+                  ],
+                  "type": "contour"
+                }
+              ],
+              "heatmapgl": [
+                {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  },
+                  "colorscale": [
+                    [
+                      0.0,
+                      "#0d0887"
+                    ],
+                    [
+                      0.1111111111111111,
+                      "#46039f"
+                    ],
+                    [
+                      0.2222222222222222,
+                      "#7201a8"
+                    ],
+                    [
+                      0.3333333333333333,
+                      "#9c179e"
+                    ],
+                    [
+                      0.4444444444444444,
+                      "#bd3786"
+                    ],
+                    [
+                      0.5555555555555556,
+                      "#d8576b"
+                    ],
+                    [
+                      0.6666666666666666,
+                      "#ed7953"
+                    ],
+                    [
+                      0.7777777777777778,
+                      "#fb9f3a"
+                    ],
+                    [
+                      0.8888888888888888,
+                      "#fdca26"
+                    ],
+                    [
+                      1.0,
+                      "#f0f921"
+                    ]
+                  ],
+                  "type": "heatmapgl"
+                }
+              ],
+              "heatmap": [
+                {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  },
+                  "colorscale": [
+                    [
+                      0.0,
+                      "#0d0887"
+                    ],
+                    [
+                      0.1111111111111111,
+                      "#46039f"
+                    ],
+                    [
+                      0.2222222222222222,
+                      "#7201a8"
+                    ],
+                    [
+                      0.3333333333333333,
+                      "#9c179e"
+                    ],
+                    [
+                      0.4444444444444444,
+                      "#bd3786"
+                    ],
+                    [
+                      0.5555555555555556,
+                      "#d8576b"
+                    ],
+                    [
+                      0.6666666666666666,
+                      "#ed7953"
+                    ],
+                    [
+                      0.7777777777777778,
+                      "#fb9f3a"
+                    ],
+                    [
+                      0.8888888888888888,
+                      "#fdca26"
+                    ],
+                    [
+                      1.0,
+                      "#f0f921"
+                    ]
+                  ],
+                  "type": "heatmap"
+                }
+              ],
+              "histogram2dcontour": [
+                {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  },
+                  "colorscale": [
+                    [
+                      0.0,
+                      "#0d0887"
+                    ],
+                    [
+                      0.1111111111111111,
+                      "#46039f"
+                    ],
+                    [
+                      0.2222222222222222,
+                      "#7201a8"
+                    ],
+                    [
+                      0.3333333333333333,
+                      "#9c179e"
+                    ],
+                    [
+                      0.4444444444444444,
+                      "#bd3786"
+                    ],
+                    [
+                      0.5555555555555556,
+                      "#d8576b"
+                    ],
+                    [
+                      0.6666666666666666,
+                      "#ed7953"
+                    ],
+                    [
+                      0.7777777777777778,
+                      "#fb9f3a"
+                    ],
+                    [
+                      0.8888888888888888,
+                      "#fdca26"
+                    ],
+                    [
+                      1.0,
+                      "#f0f921"
+                    ]
+                  ],
+                  "type": "histogram2dcontour"
+                }
+              ],
+              "histogram2d": [
+                {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  },
+                  "colorscale": [
+                    [
+                      0.0,
+                      "#0d0887"
+                    ],
+                    [
+                      0.1111111111111111,
+                      "#46039f"
+                    ],
+                    [
+                      0.2222222222222222,
+                      "#7201a8"
+                    ],
+                    [
+                      0.3333333333333333,
+                      "#9c179e"
+                    ],
+                    [
+                      0.4444444444444444,
+                      "#bd3786"
+                    ],
+                    [
+                      0.5555555555555556,
+                      "#d8576b"
+                    ],
+                    [
+                      0.6666666666666666,
+                      "#ed7953"
+                    ],
+                    [
+                      0.7777777777777778,
+                      "#fb9f3a"
+                    ],
+                    [
+                      0.8888888888888888,
+                      "#fdca26"
+                    ],
+                    [
+                      1.0,
+                      "#f0f921"
+                    ]
+                  ],
+                  "type": "histogram2d"
+                }
+              ],
+              "histogram": [
+                {
+                  "marker": {
+                    "pattern": {
+                      "fillmode": "overlay",
+                      "size": 10,
+                      "solidity": 0.2
+                    }
+                  },
+                  "type": "histogram"
+                }
+              ],
+              "mesh3d": [
+                {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  },
+                  "type": "mesh3d"
+                }
+              ],
+              "parcoords": [
+                {
+                  "line": {
+                    "colorbar": {
+                      "outlinewidth": 0,
+                      "ticks": ""
+                    }
+                  },
+                  "type": "parcoords"
+                }
+              ],
+              "pie": [
+                {
+                  "automargin": true,
+                  "type": "pie"
+                }
+              ],
+              "scatter3d": [
+                {
+                  "line": {
+                    "colorbar": {
+                      "outlinewidth": 0,
+                      "ticks": ""
+                    }
+                  },
+                  "marker": {
+                    "colorbar": {
+                      "outlinewidth": 0,
+                      "ticks": ""
+                    }
+                  },
+                  "type": "scatter3d"
+                }
+              ],
+              "scattercarpet": [
+                {
+                  "marker": {
+                    "colorbar": {
+                      "outlinewidth": 0,
+                      "ticks": ""
+                    }
+                  },
+                  "type": "scattercarpet"
+                }
+              ],
+              "scattergeo": [
+                {
+                  "marker": {
+                    "colorbar": {
+                      "outlinewidth": 0,
+                      "ticks": ""
+                    }
+                  },
+                  "type": "scattergeo"
+                }
+              ],
+              "scattergl": [
+                {
+                  "marker": {
+                    "colorbar": {
+                      "outlinewidth": 0,
+                      "ticks": ""
+                    }
+                  },
+                  "type": "scattergl"
+                }
+              ],
+              "scattermapbox": [
+                {
+                  "marker": {
+                    "colorbar": {
+                      "outlinewidth": 0,
+                      "ticks": ""
+                    }
+                  },
+                  "type": "scattermapbox"
+                }
+              ],
+              "scatterpolargl": [
+                {
+                  "marker": {
+                    "colorbar": {
+                      "outlinewidth": 0,
+                      "ticks": ""
+                    }
+                  },
+                  "type": "scatterpolargl"
+                }
+              ],
+              "scatterpolar": [
+                {
+                  "marker": {
+                    "colorbar": {
+                      "outlinewidth": 0,
+                      "ticks": ""
+                    }
+                  },
+                  "type": "scatterpolar"
+                }
+              ],
+              "scatter": [
+                {
+                  "marker": {
+                    "colorbar": {
+                      "outlinewidth": 0,
+                      "ticks": ""
+                    }
+                  },
+                  "type": "scatter"
+                }
+              ],
+              "scatterternary": [
+                {
+                  "marker": {
+                    "colorbar": {
+                      "outlinewidth": 0,
+                      "ticks": ""
+                    }
+                  },
+                  "type": "scatterternary"
+                }
+              ],
+              "surface": [
+                {
+                  "colorbar": {
+                    "outlinewidth": 0,
+                    "ticks": ""
+                  },
+                  "colorscale": [
+                    [
+                      0.0,
+                      "#0d0887"
+                    ],
+                    [
+                      0.1111111111111111,
+                      "#46039f"
+                    ],
+                    [
+                      0.2222222222222222,
+                      "#7201a8"
+                    ],
+                    [
+                      0.3333333333333333,
+                      "#9c179e"
+                    ],
+                    [
+                      0.4444444444444444,
+                      "#bd3786"
+                    ],
+                    [
+                      0.5555555555555556,
+                      "#d8576b"
+                    ],
+                    [
+                      0.6666666666666666,
+                      "#ed7953"
+                    ],
+                    [
+                      0.7777777777777778,
+                      "#fb9f3a"
+                    ],
+                    [
+                      0.8888888888888888,
+                      "#fdca26"
+                    ],
+                    [
+                      1.0,
+                      "#f0f921"
+                    ]
+                  ],
+                  "type": "surface"
+                }
+              ],
+              "table": [
+                {
+                  "cells": {
+                    "fill": {
+                      "color": "#EBF0F8"
+                    },
+                    "line": {
+                      "color": "white"
+                    }
+                  },
+                  "header": {
+                    "fill": {
+                      "color": "#C8D4E3"
+                    },
+                    "line": {
+                      "color": "white"
+                    }
+                  },
+                  "type": "table"
+                }
+              ]
+            },
+            "layout": {
+              "annotationdefaults": {
+                "arrowcolor": "#2a3f5f",
+                "arrowhead": 0,
+                "arrowwidth": 1
+              },
+              "autotypenumbers": "strict",
+              "coloraxis": {
+                "colorbar": {
+                  "outlinewidth": 0,
+                  "ticks": ""
+                }
+              },
+              "colorscale": {
+                "diverging": [
+                  [
+                    0,
+                    "#8e0152"
+                  ],
+                  [
+                    0.1,
+                    "#c51b7d"
+                  ],
+                  [
+                    0.2,
+                    "#de77ae"
+                  ],
+                  [
+                    0.3,
+                    "#f1b6da"
+                  ],
+                  [
+                    0.4,
+                    "#fde0ef"
+                  ],
+                  [
+                    0.5,
+                    "#f7f7f7"
+                  ],
+                  [
+                    0.6,
+                    "#e6f5d0"
+                  ],
+                  [
+                    0.7,
+                    "#b8e186"
+                  ],
+                  [
+                    0.8,
+                    "#7fbc41"
+                  ],
+                  [
+                    0.9,
+                    "#4d9221"
+                  ],
+                  [
+                    1,
+                    "#276419"
+                  ]
+                ],
+                "sequential": [
+                  [
+                    0.0,
+                    "#0d0887"
+                  ],
+                  [
+                    0.1111111111111111,
+                    "#46039f"
+                  ],
+                  [
+                    0.2222222222222222,
+                    "#7201a8"
+                  ],
+                  [
+                    0.3333333333333333,
+                    "#9c179e"
+                  ],
+                  [
+                    0.4444444444444444,
+                    "#bd3786"
+                  ],
+                  [
+                    0.5555555555555556,
+                    "#d8576b"
+                  ],
+                  [
+                    0.6666666666666666,
+                    "#ed7953"
+                  ],
+                  [
+                    0.7777777777777778,
+                    "#fb9f3a"
+                  ],
+                  [
+                    0.8888888888888888,
+                    "#fdca26"
+                  ],
+                  [
+                    1.0,
+                    "#f0f921"
+                  ]
+                ],
+                "sequentialminus": [
+                  [
+                    0.0,
+                    "#0d0887"
+                  ],
+                  [
+                    0.1111111111111111,
+                    "#46039f"
+                  ],
+                  [
+                    0.2222222222222222,
+                    "#7201a8"
+                  ],
+                  [
+                    0.3333333333333333,
+                    "#9c179e"
+                  ],
+                  [
+                    0.4444444444444444,
+                    "#bd3786"
+                  ],
+                  [
+                    0.5555555555555556,
+                    "#d8576b"
+                  ],
+                  [
+                    0.6666666666666666,
+                    "#ed7953"
+                  ],
+                  [
+                    0.7777777777777778,
+                    "#fb9f3a"
+                  ],
+                  [
+                    0.8888888888888888,
+                    "#fdca26"
+                  ],
+                  [
+                    1.0,
+                    "#f0f921"
+                  ]
+                ]
+              },
+              "colorway": [
+                "#636efa",
+                "#EF553B",
+                "#00cc96",
+                "#ab63fa",
+                "#FFA15A",
+                "#19d3f3",
+                "#FF6692",
+                "#B6E880",
+                "#FF97FF",
+                "#FECB52"
+              ],
+              "font": {
+                "color": "#2a3f5f"
+              },
+              "geo": {
+                "bgcolor": "white",
+                "lakecolor": "white",
+                "landcolor": "#E5ECF6",
+                "showlakes": true,
+                "showland": true,
+                "subunitcolor": "white"
+              },
+              "hoverlabel": {
+                "align": "left"
+              },
+              "hovermode": "closest",
+              "mapbox": {
+                "style": "light"
+              },
+              "paper_bgcolor": "white",
+              "plot_bgcolor": "#E5ECF6",
+              "polar": {
+                "angularaxis": {
+                  "gridcolor": "white",
+                  "linecolor": "white",
+                  "ticks": ""
+                },
+                "bgcolor": "#E5ECF6",
+                "radialaxis": {
+                  "gridcolor": "white",
+                  "linecolor": "white",
+                  "ticks": ""
+                }
+              },
+              "scene": {
+                "xaxis": {
+                  "backgroundcolor": "#E5ECF6",
+                  "gridcolor": "white",
+                  "gridwidth": 2,
+                  "linecolor": "white",
+                  "showbackground": true,
+                  "ticks": "",
+                  "zerolinecolor": "white"
+                },
+                "yaxis": {
+                  "backgroundcolor": "#E5ECF6",
+                  "gridcolor": "white",
+                  "gridwidth": 2,
+                  "linecolor": "white",
+                  "showbackground": true,
+                  "ticks": "",
+                  "zerolinecolor": "white"
+                },
+                "zaxis": {
+                  "backgroundcolor": "#E5ECF6",
+                  "gridcolor": "white",
+                  "gridwidth": 2,
+                  "linecolor": "white",
+                  "showbackground": true,
+                  "ticks": "",
+                  "zerolinecolor": "white"
+                }
+              },
+              "shapedefaults": {
+                "line": {
+                  "color": "#2a3f5f"
+                }
+              },
+              "ternary": {
+                "aaxis": {
+                  "gridcolor": "white",
+                  "linecolor": "white",
+                  "ticks": ""
+                },
+                "baxis": {
+                  "gridcolor": "white",
+                  "linecolor": "white",
+                  "ticks": ""
+                },
+                "bgcolor": "#E5ECF6",
+                "caxis": {
+                  "gridcolor": "white",
+                  "linecolor": "white",
+                  "ticks": ""
+                }
+              },
+              "title": {
+                "x": 0.05
+              },
+              "xaxis": {
+                "automargin": true,
+                "gridcolor": "white",
+                "linecolor": "white",
+                "ticks": "",
+                "title": {
+                  "standoff": 15
+                },
+                "zerolinecolor": "white",
+                "zerolinewidth": 2
+              },
+              "yaxis": {
+                "automargin": true,
+                "gridcolor": "white",
+                "linecolor": "white",
+                "ticks": "",
+                "title": {
+                  "standoff": 15
+                },
+                "zerolinecolor": "white",
+                "zerolinewidth": 2
+              }
+            }
+          },
+          "title": {
+            "text": "Predictive Power Score (PPS) - Can a feature predict the label by itself?"
+          },
+          "xaxis": {
+            "range": [
+              -3,
+              7
+            ],
+            "title": {
+              "text": "Column"
+            },
+            "type": "category"
+          },
+          "yaxis": {
+            "range": [
+              0,
+              1.05
+            ],
+            "title": {
+              "text": "Predictive Power Score (PPS)"
+            }
+          }
+        },
+        "_py2js_addTraces": {},
+        "_py2js_animate": {},
+        "_py2js_deleteTraces": {},
+        "_py2js_moveTraces": {},
+        "_py2js_relayout": {},
+        "_py2js_removeLayoutProps": {},
+        "_py2js_removeTraceProps": {},
+        "_py2js_restyle": {},
+        "_py2js_update": {},
+        "_view_count": 0
+      },
+      "buffers": [
+        {
+          "encoding": "base64",
+          "path": [
+            "_data",
+            0,
+            "y",
+            "buffer"
+          ],
+          "data": "APugdikO4j+hhY485G2bP1UcFkAUq1E/jbRK0r6PQD/jvxBHJ2GBPg=="
+        }
+      ]
+    },
+    "970bf5d935d243a5b006adbcc84de402": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_37743dbb72e94c25ad1ceb7f492af62e",
+        "style": "IPY_MODEL_5d5c7e88baf441a095cd7e4454dd412c",
+        "value": "<div>The Predictive Power Score (PPS) is used to estimate the ability of a feature to predict the label by itself (Read more about <a href=https://docs.deepchecks.com/en/stable/checks_gallery/tabular/train_test_validation/plot_feature_label_correlation_change.html target=\"_blank\">Predictive Power Score</a>). A high PPS (close to 1) can mean that this feature's success in predicting the label is actually due to data leakage - meaning that the feature holds information that is based on the label to begin with.</div>"
+      }
+    },
+    "37743dbb72e94c25ad1ceb7f492af62e": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "5d5c7e88baf441a095cd7e4454dd412c": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "79150c076bbd4ad0bc033f4f052d9f10": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_e677cb01d5c74720892171b552419d5e",
+        "style": "IPY_MODEL_1ca5afb5cf184cefa9781757dc859047",
+        "value": "<br><a href=\"#summary_GJ3R6KTJG3H7B3WH9P753O3DM-section-S61IQ\" style=\"font-size: 14px;\">Go to top</a>"
+      }
+    },
+    "e677cb01d5c74720892171b552419d5e": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "1ca5afb5cf184cefa9781757dc859047": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "815594a813c34381acadf499542ef2f1": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "348964530e6c4b97b1d744e1adfd4fcf": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "61c850f925164925803aca7601b5eb55": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_d93c96bd75c246fea79d808c84e0188e",
+        "style": "IPY_MODEL_d69ee4adcd28402493ea7e91e3cc69b4",
+        "value": "<hr style=\"background-color: #eee;border: 0 none;color: #eee;height: 4px;\">"
+      }
+    },
+    "d93c96bd75c246fea79d808c84e0188e": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "d69ee4adcd28402493ea7e91e3cc69b4": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "458dc77158764cbcab46660b6bf2b957": {
+      "model_name": "VBoxModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [
+          "rendered_html",
+          "jp-RenderedHTMLCommon",
+          "jp-RenderedHTML",
+          "jp-OutputArea-output"
+        ],
+        "children": [
+          "IPY_MODEL_8d92bc9f508d42a3a200a3c70f7f795d",
+          "IPY_MODEL_63e3b4a1ff8644e0bf832d09e2a89b52",
+          "IPY_MODEL_7a90ae7976c946cf87fc47c5dea4c503",
+          "IPY_MODEL_18bab661cf5d43d790d8611d45003df0"
+        ],
+        "layout": "IPY_MODEL_870061280cd24e5eae1f63cc4e758310"
+      }
+    },
+    "8d92bc9f508d42a3a200a3c70f7f795d": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_87ab29a2621d4fecb23a6951d4180989",
+        "style": "IPY_MODEL_fa883362f5564321ad12622569ee91c2",
+        "value": "<h4 id=\"OutlierSampleDetection_GJ3R6KTJG3H7B3WH9P753O3DM-section-S61IQ\"><b>Outlier Sample Detection</b></h4>"
+      }
+    },
+    "87ab29a2621d4fecb23a6951d4180989": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "fa883362f5564321ad12622569ee91c2": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "63e3b4a1ff8644e0bf832d09e2a89b52": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_b1365eaf2bae4ecb86c4b1f4d42ca7cc",
+        "style": "IPY_MODEL_84d36a8384774c9db739514d3be6302f",
+        "value": "<p>Detects outliers in a dataset using the LoOP algorithm.</p>"
+      }
+    },
+    "b1365eaf2bae4ecb86c4b1f4d42ca7cc": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "84d36a8384774c9db739514d3be6302f": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "7a90ae7976c946cf87fc47c5dea4c503": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_8cd61c6ba34e4f20bfb325ca295a50b6",
+        "style": "IPY_MODEL_5aac984a193b4080af1b1f1df1edbbb8",
+        "value": "<h5><b>Conditions Summary</b></h5><style type=\"text/css\">\n#T_5ad84_ table {\n  text-align: left;\n  white-space: pre-wrap;\n}\n#T_5ad84_ thead {\n  text-align: left;\n  white-space: pre-wrap;\n}\n#T_5ad84_ tbody {\n  text-align: left;\n  white-space: pre-wrap;\n}\n#T_5ad84_ th {\n  text-align: left;\n  white-space: pre-wrap;\n}\n#T_5ad84_ td {\n  text-align: left;\n  white-space: pre-wrap;\n}\n</style>\n<table id=\"T_5ad84_\">\n  <thead>\n    <tr>\n      <th class=\"col_heading level0 col0\" >Status</th>\n      <th class=\"col_heading level0 col1\" >Condition</th>\n      <th class=\"col_heading level0 col2\" >More Info</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td id=\"T_5ad84_row0_col0\" class=\"data row0 col0\" ><div style=\"color: green;text-align: center\">\u2713</div></td>\n      <td id=\"T_5ad84_row0_col1\" class=\"data row0 col1\" >Ratio of samples exceeding the outlier score threshold 0.7 is less or equal to 10%</td>\n      <td id=\"T_5ad84_row0_col2\" class=\"data row0 col2\" >0% of dataset samples above outlier threshold</td>\n    </tr>\n  </tbody>\n</table>\n"
+      }
+    },
+    "8cd61c6ba34e4f20bfb325ca295a50b6": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "5aac984a193b4080af1b1f1df1edbbb8": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "18bab661cf5d43d790d8611d45003df0": {
+      "model_name": "VBoxModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "children": [
+          "IPY_MODEL_87f9242b81d34784bdeee77c987bab26",
+          "IPY_MODEL_2aba6b3cdc1d45e7acdf45a028d8c700",
+          "IPY_MODEL_64d454e3dddf40c7a267b8ae9887fcd9",
+          "IPY_MODEL_deec6c1bd630496f91d8a19c86f45627",
+          "IPY_MODEL_70c8c395ac104802b78294002104e005"
+        ],
+        "layout": "IPY_MODEL_64f57d98c8344677a2e10287452a655e"
+      }
+    },
+    "87f9242b81d34784bdeee77c987bab26": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_b17a9f2afbaa41628fce713632251cc6",
+        "style": "IPY_MODEL_71c253f85ec4469dab357f300cae21f2",
+        "value": "<h5><b>Additional Outputs</b></h5>"
+      }
+    },
+    "b17a9f2afbaa41628fce713632251cc6": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "71c253f85ec4469dab357f300cae21f2": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "2aba6b3cdc1d45e7acdf45a028d8c700": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_a82e49285af44cb084048b71194a35f2",
+        "style": "IPY_MODEL_20369b71c4a84511a6829b3e89588014",
+        "value": "<div><span>\n                    The Outlier Probability Score is calculated by the LoOP algorithm which measures the local deviation\n                    of density of a given sample with respect to its neighbors. These outlier scores are directly\n                    interpretable as a probability of an object being an outlier (see\n                    <a href=\"https://www.dbs.ifi.lmu.de/Publikationen/Papers/LoOP1649.pdf\"\n                    target=\"_blank\" rel=\"noopener noreferrer\">link</a> for more information).<br><br>\n                    </span></div>"
+      }
+    },
+    "a82e49285af44cb084048b71194a35f2": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "20369b71c4a84511a6829b3e89588014": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "64d454e3dddf40c7a267b8ae9887fcd9": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_c9ce93afe0344820ac388253d8e5c8fd",
+        "style": "IPY_MODEL_80b28bea528346ba8ea2b626f1129539",
+        "value": "<style type=\"text/css\">\n#T_199cf_ table {\n  text-align: left;\n  white-space: pre-wrap;\n}\n#T_199cf_ thead {\n  text-align: left;\n  white-space: pre-wrap;\n}\n#T_199cf_ tbody {\n  text-align: left;\n  white-space: pre-wrap;\n}\n#T_199cf_ th {\n  text-align: left;\n  white-space: pre-wrap;\n}\n#T_199cf_ td {\n  text-align: left;\n  white-space: pre-wrap;\n}\n</style>\n<table id=\"T_199cf_\">\n  <thead>\n    <tr>\n      <th class=\"blank level0\" >&nbsp;</th>\n      <th class=\"col_heading level0 col0\" >Outlier Probability Score</th>\n      <th class=\"col_heading level0 col1\" >loan_id</th>\n      <th class=\"col_heading level0 col2\" >customer_id</th>\n      <th class=\"col_heading level0 col3\" >loan_status</th>\n      <th class=\"col_heading level0 col4\" >application_time</th>\n      <th class=\"col_heading level0 col5\" >current_loan_amount</th>\n      <th class=\"col_heading level0 col6\" >term</th>\n      <th class=\"col_heading level0 col7\" >tax_liens</th>\n      <th class=\"col_heading level0 col8\" >purpose</th>\n      <th class=\"col_heading level0 col9\" >no_of_properties</th>\n      <th class=\"col_heading level0 col10\" >home_ownership</th>\n      <th class=\"col_heading level0 col11\" >annual_income</th>\n      <th class=\"col_heading level0 col12\" >years_in_current_job</th>\n      <th class=\"col_heading level0 col13\" >months_since_last_delinquent</th>\n      <th class=\"col_heading level0 col14\" >no_of_cars</th>\n      <th class=\"col_heading level0 col15\" >no_of_children</th>\n      <th class=\"col_heading level0 col16\" >credit_score</th>\n      <th class=\"col_heading level0 col17\" >monthly_debt</th>\n      <th class=\"col_heading level0 col18\" >years_of_credit_history</th>\n      <th class=\"col_heading level0 col19\" >no_of_open_accounts</th>\n      <th class=\"col_heading level0 col20\" >no_of_credit_problems</th>\n      <th class=\"col_heading level0 col21\" >current_credit_balance</th>\n      <th class=\"col_heading level0 col22\" >max_open_credit</th>\n      <th class=\"col_heading level0 col23\" >bankruptcies</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th id=\"T_199cf_level0_row0\" class=\"row_heading level0 row0\" >6650</th>\n      <td id=\"T_199cf_row0_col0\" class=\"data row0 col0\" >0.70</td>\n      <td id=\"T_199cf_row0_col1\" class=\"data row0 col1\" >9ce5bfa2-e8f3-4cb6-a499-758eae86a2e2</td>\n      <td id=\"T_199cf_row0_col2\" class=\"data row0 col2\" >4e096ac2-2174-4ee2-b423-a07bb56316d5</td>\n      <td id=\"T_199cf_row0_col3\" class=\"data row0 col3\" >loan given</td>\n      <td id=\"T_199cf_row0_col4\" class=\"data row0 col4\" >2015-01-03 12:29:00</td>\n      <td id=\"T_199cf_row0_col5\" class=\"data row0 col5\" >7822</td>\n      <td id=\"T_199cf_row0_col6\" class=\"data row0 col6\" >short term</td>\n      <td id=\"T_199cf_row0_col7\" class=\"data row0 col7\" >0.0</td>\n      <td id=\"T_199cf_row0_col8\" class=\"data row0 col8\" >moving</td>\n      <td id=\"T_199cf_row0_col9\" class=\"data row0 col9\" >2</td>\n      <td id=\"T_199cf_row0_col10\" class=\"data row0 col10\" >nan</td>\n      <td id=\"T_199cf_row0_col11\" class=\"data row0 col11\" >nan</td>\n      <td id=\"T_199cf_row0_col12\" class=\"data row0 col12\" >nan</td>\n      <td id=\"T_199cf_row0_col13\" class=\"data row0 col13\" >nan</td>\n      <td id=\"T_199cf_row0_col14\" class=\"data row0 col14\" >nan</td>\n      <td id=\"T_199cf_row0_col15\" class=\"data row0 col15\" >nan</td>\n      <td id=\"T_199cf_row0_col16\" class=\"data row0 col16\" >nan</td>\n      <td id=\"T_199cf_row0_col17\" class=\"data row0 col17\" >nan</td>\n      <td id=\"T_199cf_row0_col18\" class=\"data row0 col18\" >nan</td>\n      <td id=\"T_199cf_row0_col19\" class=\"data row0 col19\" >nan</td>\n      <td id=\"T_199cf_row0_col20\" class=\"data row0 col20\" >nan</td>\n      <td id=\"T_199cf_row0_col21\" class=\"data row0 col21\" >nan</td>\n      <td id=\"T_199cf_row0_col22\" class=\"data row0 col22\" >nan</td>\n      <td id=\"T_199cf_row0_col23\" class=\"data row0 col23\" >nan</td>\n    </tr>\n    <tr>\n      <th id=\"T_199cf_level0_row1\" class=\"row_heading level0 row1\" >15353</th>\n      <td id=\"T_199cf_row1_col0\" class=\"data row1 col0\" >0.67</td>\n      <td id=\"T_199cf_row1_col1\" class=\"data row1 col1\" >fcf3fcd9-0679-47b4-9479-ae7d0fd336fb</td>\n      <td id=\"T_199cf_row1_col2\" class=\"data row1 col2\" >b24b7170-8493-4ed9-9476-dccd2bcdb7e4</td>\n      <td id=\"T_199cf_row1_col3\" class=\"data row1 col3\" >loan given</td>\n      <td id=\"T_199cf_row1_col4\" class=\"data row1 col4\" >2015-03-20 10:28:00</td>\n      <td id=\"T_199cf_row1_col5\" class=\"data row1 col5\" >4888</td>\n      <td id=\"T_199cf_row1_col6\" class=\"data row1 col6\" >short term</td>\n      <td id=\"T_199cf_row1_col7\" class=\"data row1 col7\" >0.0</td>\n      <td id=\"T_199cf_row1_col8\" class=\"data row1 col8\" >moving</td>\n      <td id=\"T_199cf_row1_col9\" class=\"data row1 col9\" >3</td>\n      <td id=\"T_199cf_row1_col10\" class=\"data row1 col10\" >nan</td>\n      <td id=\"T_199cf_row1_col11\" class=\"data row1 col11\" >nan</td>\n      <td id=\"T_199cf_row1_col12\" class=\"data row1 col12\" >nan</td>\n      <td id=\"T_199cf_row1_col13\" class=\"data row1 col13\" >nan</td>\n      <td id=\"T_199cf_row1_col14\" class=\"data row1 col14\" >nan</td>\n      <td id=\"T_199cf_row1_col15\" class=\"data row1 col15\" >nan</td>\n      <td id=\"T_199cf_row1_col16\" class=\"data row1 col16\" >nan</td>\n      <td id=\"T_199cf_row1_col17\" class=\"data row1 col17\" >nan</td>\n      <td id=\"T_199cf_row1_col18\" class=\"data row1 col18\" >nan</td>\n      <td id=\"T_199cf_row1_col19\" class=\"data row1 col19\" >nan</td>\n      <td id=\"T_199cf_row1_col20\" class=\"data row1 col20\" >nan</td>\n      <td id=\"T_199cf_row1_col21\" class=\"data row1 col21\" >nan</td>\n      <td id=\"T_199cf_row1_col22\" class=\"data row1 col22\" >nan</td>\n      <td id=\"T_199cf_row1_col23\" class=\"data row1 col23\" >nan</td>\n    </tr>\n    <tr>\n      <th id=\"T_199cf_level0_row2\" class=\"row_heading level0 row2\" >10328</th>\n      <td id=\"T_199cf_row2_col0\" class=\"data row2 col0\" >0.66</td>\n      <td id=\"T_199cf_row2_col1\" class=\"data row2 col1\" >b21aaa28-b91c-4ad3-b036-7fb634073d87</td>\n      <td id=\"T_199cf_row2_col2\" class=\"data row2 col2\" >7867876c-73c3-46a9-ad7e-366631aacb16</td>\n      <td id=\"T_199cf_row2_col3\" class=\"data row2 col3\" >loan given</td>\n      <td id=\"T_199cf_row2_col4\" class=\"data row2 col4\" >2015-03-16 14:31:00</td>\n      <td id=\"T_199cf_row2_col5\" class=\"data row2 col5\" >24565</td>\n      <td id=\"T_199cf_row2_col6\" class=\"data row2 col6\" >short term</td>\n      <td id=\"T_199cf_row2_col7\" class=\"data row2 col7\" >0.0</td>\n      <td id=\"T_199cf_row2_col8\" class=\"data row2 col8\" >buy house</td>\n      <td id=\"T_199cf_row2_col9\" class=\"data row2 col9\" >3</td>\n      <td id=\"T_199cf_row2_col10\" class=\"data row2 col10\" >nan</td>\n      <td id=\"T_199cf_row2_col11\" class=\"data row2 col11\" >nan</td>\n      <td id=\"T_199cf_row2_col12\" class=\"data row2 col12\" >nan</td>\n      <td id=\"T_199cf_row2_col13\" class=\"data row2 col13\" >nan</td>\n      <td id=\"T_199cf_row2_col14\" class=\"data row2 col14\" >nan</td>\n      <td id=\"T_199cf_row2_col15\" class=\"data row2 col15\" >nan</td>\n      <td id=\"T_199cf_row2_col16\" class=\"data row2 col16\" >nan</td>\n      <td id=\"T_199cf_row2_col17\" class=\"data row2 col17\" >nan</td>\n      <td id=\"T_199cf_row2_col18\" class=\"data row2 col18\" >nan</td>\n      <td id=\"T_199cf_row2_col19\" class=\"data row2 col19\" >nan</td>\n      <td id=\"T_199cf_row2_col20\" class=\"data row2 col20\" >nan</td>\n      <td id=\"T_199cf_row2_col21\" class=\"data row2 col21\" >nan</td>\n      <td id=\"T_199cf_row2_col22\" class=\"data row2 col22\" >nan</td>\n      <td id=\"T_199cf_row2_col23\" class=\"data row2 col23\" >nan</td>\n    </tr>\n    <tr>\n      <th id=\"T_199cf_level0_row3\" class=\"row_heading level0 row3\" >16006</th>\n      <td id=\"T_199cf_row3_col0\" class=\"data row3 col0\" >0.65</td>\n      <td id=\"T_199cf_row3_col1\" class=\"data row3 col1\" >7e9162be-e86f-47e0-8a17-c639147f712b</td>\n      <td id=\"T_199cf_row3_col2\" class=\"data row3 col2\" >ba0b9709-6ac3-4d1e-b11b-2bba43b77b03</td>\n      <td id=\"T_199cf_row3_col3\" class=\"data row3 col3\" >loan given</td>\n      <td id=\"T_199cf_row3_col4\" class=\"data row3 col4\" >2015-01-29 13:39:00</td>\n      <td id=\"T_199cf_row3_col5\" class=\"data row3 col5\" >7867</td>\n      <td id=\"T_199cf_row3_col6\" class=\"data row3 col6\" >short term</td>\n      <td id=\"T_199cf_row3_col7\" class=\"data row3 col7\" >0.0</td>\n      <td id=\"T_199cf_row3_col8\" class=\"data row3 col8\" >small_business</td>\n      <td id=\"T_199cf_row3_col9\" class=\"data row3 col9\" >0</td>\n      <td id=\"T_199cf_row3_col10\" class=\"data row3 col10\" >nan</td>\n      <td id=\"T_199cf_row3_col11\" class=\"data row3 col11\" >nan</td>\n      <td id=\"T_199cf_row3_col12\" class=\"data row3 col12\" >nan</td>\n      <td id=\"T_199cf_row3_col13\" class=\"data row3 col13\" >nan</td>\n      <td id=\"T_199cf_row3_col14\" class=\"data row3 col14\" >nan</td>\n      <td id=\"T_199cf_row3_col15\" class=\"data row3 col15\" >nan</td>\n      <td id=\"T_199cf_row3_col16\" class=\"data row3 col16\" >nan</td>\n      <td id=\"T_199cf_row3_col17\" class=\"data row3 col17\" >nan</td>\n      <td id=\"T_199cf_row3_col18\" class=\"data row3 col18\" >nan</td>\n      <td id=\"T_199cf_row3_col19\" class=\"data row3 col19\" >nan</td>\n      <td id=\"T_199cf_row3_col20\" class=\"data row3 col20\" >nan</td>\n      <td id=\"T_199cf_row3_col21\" class=\"data row3 col21\" >nan</td>\n      <td id=\"T_199cf_row3_col22\" class=\"data row3 col22\" >nan</td>\n      <td id=\"T_199cf_row3_col23\" class=\"data row3 col23\" >nan</td>\n    </tr>\n    <tr>\n      <th id=\"T_199cf_level0_row4\" class=\"row_heading level0 row4\" >16501</th>\n      <td id=\"T_199cf_row4_col0\" class=\"data row4 col0\" >0.65</td>\n      <td id=\"T_199cf_row4_col1\" class=\"data row4 col1\" >e29eae9e-6edb-41bd-9c6d-7caf783807f1</td>\n      <td id=\"T_199cf_row4_col2\" class=\"data row4 col2\" >bffc0785-7a1a-45fe-9ffa-0fa294f0a077</td>\n      <td id=\"T_199cf_row4_col3\" class=\"data row4 col3\" >loan given</td>\n      <td id=\"T_199cf_row4_col4\" class=\"data row4 col4\" >2015-04-12 13:26:00</td>\n      <td id=\"T_199cf_row4_col5\" class=\"data row4 col5\" >7095</td>\n      <td id=\"T_199cf_row4_col6\" class=\"data row4 col6\" >short term</td>\n      <td id=\"T_199cf_row4_col7\" class=\"data row4 col7\" >0.0</td>\n      <td id=\"T_199cf_row4_col8\" class=\"data row4 col8\" >buy house</td>\n      <td id=\"T_199cf_row4_col9\" class=\"data row4 col9\" >2</td>\n      <td id=\"T_199cf_row4_col10\" class=\"data row4 col10\" >nan</td>\n      <td id=\"T_199cf_row4_col11\" class=\"data row4 col11\" >nan</td>\n      <td id=\"T_199cf_row4_col12\" class=\"data row4 col12\" >nan</td>\n      <td id=\"T_199cf_row4_col13\" class=\"data row4 col13\" >nan</td>\n      <td id=\"T_199cf_row4_col14\" class=\"data row4 col14\" >nan</td>\n      <td id=\"T_199cf_row4_col15\" class=\"data row4 col15\" >nan</td>\n      <td id=\"T_199cf_row4_col16\" class=\"data row4 col16\" >nan</td>\n      <td id=\"T_199cf_row4_col17\" class=\"data row4 col17\" >nan</td>\n      <td id=\"T_199cf_row4_col18\" class=\"data row4 col18\" >nan</td>\n      <td id=\"T_199cf_row4_col19\" class=\"data row4 col19\" >nan</td>\n      <td id=\"T_199cf_row4_col20\" class=\"data row4 col20\" >nan</td>\n      <td id=\"T_199cf_row4_col21\" class=\"data row4 col21\" >nan</td>\n      <td id=\"T_199cf_row4_col22\" class=\"data row4 col22\" >nan</td>\n      <td id=\"T_199cf_row4_col23\" class=\"data row4 col23\" >nan</td>\n    </tr>\n  </tbody>\n</table>\n"
+      }
+    },
+    "c9ce93afe0344820ac388253d8e5c8fd": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "80b28bea528346ba8ea2b626f1129539": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "deec6c1bd630496f91d8a19c86f45627": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_ce9129db269c44c2ae13b580499a747a",
+        "style": "IPY_MODEL_1f3311d6481c48f9908bb369159cbffe",
+        "value": "<div><p style=\"font-size:0.9em;line-height:1;\"><i>Note - data sampling: Data is sampled from the original dataset, running on 5000 samples out of 21952. Sample size can be controlled with the \"n_samples\" parameter.</i></p></div>"
+      }
+    },
+    "ce9129db269c44c2ae13b580499a747a": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "1f3311d6481c48f9908bb369159cbffe": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "70c8c395ac104802b78294002104e005": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_d1b25043da6647eeabf92612f8d03d7b",
+        "style": "IPY_MODEL_990cb685892a4413961bc33196ca808d",
+        "value": "<br><a href=\"#summary_GJ3R6KTJG3H7B3WH9P753O3DM-section-S61IQ\" style=\"font-size: 14px;\">Go to top</a>"
+      }
+    },
+    "d1b25043da6647eeabf92612f8d03d7b": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "990cb685892a4413961bc33196ca808d": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "64f57d98c8344677a2e10287452a655e": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "870061280cd24e5eae1f63cc4e758310": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "ee3c20cd9eec470ca13772362716db11": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "bc8ded3d5ae147b18b34c283ab7a8310": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "eb3b22c4aed644198d0046f578d23e80": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "1129dae1186447c59eef8b7f0df9120a": {
+      "model_name": "VBoxModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "children": [
+          "IPY_MODEL_a8100ed8c8934c0da7de40c94dc570d2",
+          "IPY_MODEL_c4ecd78d8b914bfd828ff9cb45008014"
+        ],
+        "layout": "IPY_MODEL_ed5a9d5a220944da867fa2600c579c2e"
+      }
+    },
+    "a8100ed8c8934c0da7de40c94dc570d2": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_9c968cd025414e3dbe9bd5ecb0f318f4",
+        "style": "IPY_MODEL_3528b610f30b4971b1a3b4e815d6614f"
+      }
+    },
+    "9c968cd025414e3dbe9bd5ecb0f318f4": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "3528b610f30b4971b1a3b4e815d6614f": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "c4ecd78d8b914bfd828ff9cb45008014": {
+      "model_name": "AccordionModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [
+          "rendered_html",
+          "jp-RenderedHTMLCommon",
+          "jp-RenderedHTML",
+          "jp-OutputArea-output"
+        ],
+        "children": [
+          "IPY_MODEL_1c7d468e46984a63adb950aaf96666e2"
+        ],
+        "layout": "IPY_MODEL_55459ef8f2ba4f5aa950bef0a6ef38a4",
+        "titles": [
+          ""
+        ]
+      }
+    },
+    "1c7d468e46984a63adb950aaf96666e2": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_678c0f13b7da4baab491ee40ec366dbc",
+        "style": "IPY_MODEL_e7fe620bb0604726ae49b06b690b09e5",
+        "value": "<p>No outputs to show.</p>"
+      }
+    },
+    "678c0f13b7da4baab491ee40ec366dbc": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "e7fe620bb0604726ae49b06b690b09e5": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "55459ef8f2ba4f5aa950bef0a6ef38a4": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "ed5a9d5a220944da867fa2600c579c2e": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "e0d8ebbc6744493f8165dafdc9106c6b": {
+      "model_name": "VBoxModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "children": [
+          "IPY_MODEL_228adaf0418743f7b64602afb2c78059",
+          "IPY_MODEL_22194a5b063942818acab41a9a512a9d"
+        ],
+        "layout": "IPY_MODEL_ee0f4d68f2dd4810b1bc649ed0a53202"
+      }
+    },
+    "228adaf0418743f7b64602afb2c78059": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_35bf463e3c03492baa828d7251cedc48",
+        "style": "IPY_MODEL_89e92c1f2da64408b0002c481d34dff3"
+      }
+    },
+    "35bf463e3c03492baa828d7251cedc48": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "89e92c1f2da64408b0002c481d34dff3": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "22194a5b063942818acab41a9a512a9d": {
+      "model_name": "AccordionModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [
+          "rendered_html",
+          "jp-RenderedHTMLCommon",
+          "jp-RenderedHTML",
+          "jp-OutputArea-output"
+        ],
+        "children": [
+          "IPY_MODEL_4037c9b366174c568c26a39625af5a8d"
+        ],
+        "layout": "IPY_MODEL_416e70967c1e4033b20a7ecbbf4bd46a",
+        "titles": [
+          ""
+        ]
+      }
+    },
+    "4037c9b366174c568c26a39625af5a8d": {
+      "model_name": "HTMLModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {
+        "_dom_classes": [],
+        "layout": "IPY_MODEL_7c335c5ef9f545599747309fcab27341",
+        "style": "IPY_MODEL_944f664fe6bf4bf6ab4f10c1553e78e6",
+        "value": "<p>No outputs to show.</p>"
+      }
+    },
+    "7c335c5ef9f545599747309fcab27341": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "944f664fe6bf4bf6ab4f10c1553e78e6": {
+      "model_name": "HTMLStyleModel",
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "416e70967c1e4033b20a7ecbbf4bd46a": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "ee0f4d68f2dd4810b1bc649ed0a53202": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "b4ad14deee844b77877d6c5e8848e86b": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    },
+    "c757ba0a97574b509ae2eee245c83efd": {
+      "model_name": "LayoutModel",
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "2.0.0",
+      "state": {}
+    }
+  }
+}
+</script>
+<script type="application/vnd.jupyter.widget-view+json">
+{"version_major": 2, "version_minor": 0, "model_id": "046b5fe8812741a48d6c90663f142615"}
+</script>
+
+</body>
+</html>

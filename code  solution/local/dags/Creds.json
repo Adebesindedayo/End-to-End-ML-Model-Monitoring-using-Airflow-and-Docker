@@ -1,0 +1,7 @@
+{
+  "user": "postgres",
+  "password": "projectpro123",
+  "host": "ml-monitoring-airflow.cdnugfjpq15f.us-east-1.rds.amazonaws.com",
+  "database": "testdb",
+  "port": 5432
+}
